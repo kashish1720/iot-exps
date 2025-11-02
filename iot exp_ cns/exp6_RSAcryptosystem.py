@@ -1,6 +1,7 @@
 import random
 from math import gcd
 
+# Check if a number is prime
 def is_prime(num):
     if num < 2:
         return False
@@ -9,12 +10,14 @@ def is_prime(num):
             return False
     return True
 
+# Generate a random prime number between given range
 def generate_prime_candidate(start=100, end=300):
     while True:
         p = random.randint(start, end)
         if is_prime(p):
             return p
 
+# Calculate modular inverse using Extended Euclidean Algorithm
 def mod_inverse(e, phi):
     def egcd(a, b):
         if a == 0:
@@ -28,43 +31,79 @@ def mod_inverse(e, phi):
     else:
         return x % phi
 
+# Generate RSA keys (public and private) along with primes p and q
 def generate_keys():
     p = generate_prime_candidate()
     q = generate_prime_candidate()
     while q == p:
         q = generate_prime_candidate()
+
     n = p * q
     phi = (p - 1) * (q - 1)
 
     e = random.randrange(2, phi)
     while gcd(e, phi) != 1:
         e = random.randrange(2, phi)
+
     d = mod_inverse(e, phi)
 
-    return (e, n), (d, n)
+    return (e, n), (d, n), p, q
 
-def encrypt(plaintext, public_key):
+# Encrypt text message
+def encrypt_text(plaintext, public_key):
     e, n = public_key
     cipher = [pow(ord(char), e, n) for char in plaintext]
     return cipher
 
-def decrypt(ciphertext, private_key):
+# Decrypt text message
+def decrypt_text(ciphertext, private_key):
     d, n = private_key
     plain = [chr(pow(char, d, n)) for char in ciphertext]
     return ''.join(plain)
 
+# Encrypt numeric message
+def encrypt_number(number, public_key):
+    e, n = public_key
+    return pow(number, e, n)
+
+# Decrypt numeric message
+def decrypt_number(cipher_num, private_key):
+    d, n = private_key
+    return pow(cipher_num, d, n)
+
+# Main function
 def main():
-    print("RSA Cryptosystem Implementation")
-    public_key, private_key = generate_keys()
-    print(f"Generated Public Key (e, n): {public_key}")
-    print(f"Generated Private Key (d, n): {private_key}")
+    print("===== RSA Cryptosystem Implementation =====")
 
-    message = input("Enter the message to encrypt: ")
-    encrypted_msg = encrypt(message, public_key)
-    print(f"Encrypted Message (numeric): {encrypted_msg}")
+    # Generate keys
+    public_key, private_key, p, q = generate_keys()
 
-    decrypted_msg = decrypt(encrypted_msg, private_key)
-    print(f"Decrypted Message: {decrypted_msg}")
+    print(f"\nPrime numbers (p, q): {p}, {q}")
+    print(f"Public Key (e, n): {public_key}")
+    print(f"Private Key (d, n): {private_key}")
 
+    # --- Text Message Encryption ---
+    message = input("\nEnter a TEXT message to encrypt: ")
+    encrypted_text = encrypt_text(message, public_key)
+    print(f"Encrypted Text Message (numeric list): {encrypted_text}")
+
+    decrypted_text = decrypt_text(encrypted_text, private_key)
+    print(f"Decrypted Text Message: {decrypted_text}")
+
+    # --- Numeric Message Encryption ---
+    try:
+        num_message = int(input("\nEnter a NUMERIC message to encrypt (less than n): "))
+        if num_message >= public_key[1]:
+            print("Error: Message must be less than n!")
+        else:
+            encrypted_num = encrypt_number(num_message, public_key)
+            print(f"Encrypted Numeric Message: {encrypted_num}")
+
+            decrypted_num = decrypt_number(encrypted_num, private_key)
+            print(f"Decrypted Numeric Message: {decrypted_num}")
+    except ValueError:
+        print("Invalid numeric input!")
+
+# Run the program
 if __name__ == "__main__":
     main()
